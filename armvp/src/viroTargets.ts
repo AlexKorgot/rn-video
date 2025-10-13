@@ -5,7 +5,7 @@ export const TARGET_NAME = 'poster';
 export const registerTargets = () => {
   ViroARTrackingTargets.createTargets({
     [TARGET_NAME]: {
-      source: require('../assets/marker.jpg'),
+      source: require('../assets/marker.png'),
       orientation: 'Up',
       physicalWidth: 0.15,
     },
