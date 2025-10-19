@@ -1,4 +1,4 @@
-import { ViroARTrackingTargets } from '@reactvision/react-viro';
+import {ViroARTrackingTargets} from '@reactvision/react-viro';
 
 export const TARGET_NAME = 'poster';
 
