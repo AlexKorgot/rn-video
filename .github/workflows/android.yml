@@ -1,5 +1,8 @@
 name: Android CI
-on: { push: { branches: [ main ] }, workflow_dispatch: {} }
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
 
 jobs:
   build-android:
@@ -9,24 +12,37 @@ jobs:
         with:
           lfs: true
           fetch-depth: 0
+
       - name: Git LFS
         run: |
           git lfs install --local
           git lfs pull
+
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
+        with:
+          node-version: '20'
+
       - name: Install deps
         working-directory: armvp
         run: yarn install --frozen-lockfile
+
       - uses: actions/setup-java@v4
-        with: { distribution: 'temurin', java-version: '17' }
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Grant execute permission for gradlew
         working-directory: armvp/android
         run: chmod +x gradlew
-      - name: Build AAB
+
+      # ⬇️ Меняем сборку на assembleRelease (генерирует APK)
+      - name: Build APK
         working-directory: armvp/android
-        run: ./gradlew bundleRelease
-      - uses: actions/upload-artifact@v4
+        run: ./gradlew clean :app:assembleRelease
+
+      # ⬇️ Загружаем APK как артефакт
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: armvp/android/app/build/outputs/bundle/release/*.aab
+          name: app-release-apk
+          path: armvp/android/app/build/outputs/apk/release/*.apk
