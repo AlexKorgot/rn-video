@@ -1,10 +1,19 @@
 default_platform(:ios)
 platform :ios do
   lane :beta do
-    increment_build_number(xcodeproj: "armvp.xcodeproj")
+    match(
+      type: "appstore",
+      readonly: true,
+      git_url: ENV['MATCH_GIT_URL'],
+      git_branch: ENV['MATCH_GIT_BRANCH'] || "main",
+      storage_mode: "git",
+      username: ENV['APPLE_ID_EMAIL'],
+      app_identifier: ENV['APPLE_APP_ID'],
+      team_id: ENV['APPLE_TEAM_ID'],
+      keychain_name: "login.keychain-db"
+    )
+    increment_build_number
     build_app(
-      workspace: "armvp.xcworkspace",
-      scheme: "armvp",
       export_method: "app-store"
     )
     upload_to_testflight(skip_waiting_for_build_processing: true)

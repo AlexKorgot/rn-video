@@ -51,5 +51,42 @@ target 'armvp' do
       config[:reactNativePath],
       :mac_catalyst_enabled => false
     )
+
+    require 'xcodeproj'
+    project_path = Dir['*.xcodeproj'].first
+    project = Xcodeproj::Project.open(project_path)
+    app_target = project.targets.find { |t| t.product_type == 'com.apple.product-type.application' }
+
+    if app_target
+      exists = app_target.build_phases.any? do |bp|
+        bp.isa == 'PBXShellScriptBuildPhase' && bp.name == 'Start Metro (RN)'
+      end
+
+      unless exists
+        phase = app_target.new_shell_script_build_phase('Start Metro (RN)')
+        phase.shell_script = <<~'SCRIPT'
+          if [ "${CONFIGURATION}" != "Debug" ]; then exit 0; fi
+          export RCT_METRO_PORT=${RCT_METRO_PORT:=8081}
+          if ! command -v nc >/dev/null 2>&1; then echo "nc missing; skip"; exit 0; fi
+          if ! nc -z localhost $RCT_METRO_PORT; then
+            echo "Starting Metro on $RCT_METRO_PORT..."
+            open -g -a Terminal "$SRCROOT/.." --args yarn start
+          else
+            echo "Metro already running"
+          fi
+        SCRIPT
+
+        phases = app_target.build_phases
+        compile_idx = phases.index { |bp| bp.isa == 'PBXSourcesBuildPhase' } || phases.length
+        phases.delete(phase)
+        phases.insert(compile_idx, phase)
+        project.save
+        Pod::UI.puts 'Added Run Script Phase: Start Metro (RN)'
+      else
+        Pod::UI.puts 'Run Script Phase already exists'
+      end
+    else
+      Pod::UI.puts 'App target not found, skip Metro phase'
+    end
   end
 end
